@@ -325,7 +325,6 @@ else :
             st.text('')
             st.write(df_st)
             tweet_data = df_st.copy()
-            tweet_data.to_csv('tweet_data.csv')
 
         except Exception as exception :
             logger.debug('Token Expired or accessed more times')
@@ -333,7 +332,6 @@ else :
         else:
             # Data Cleaning
             st.text('')
-            st.write(tweet_data)
 
             def clean_text(text):
                 ''' make text lowercase, removing text in square bracket, removing punctuation and words containing numbers'''
