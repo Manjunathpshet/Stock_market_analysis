@@ -15,22 +15,44 @@ What you can do using this app :
 4 . Get the results for different company stocks.
 
 ## Installation
+Clone the repo
+```bash
+git clone https://github.com/Manjunathpshet/Stock_market_analysis.git
+```
+cd into the project root folder
+```bash
+ cd Stock_market_analysis
+```
+Create virtual environment
+via python
+Then you should create a virtual environment named .venv
 
-Install all the required libreries using below command
+```bash
+ python -m  venv venv
+```
+and activate the environment.
 
+```bash
+ venv/Scripts/activate.bat
+```
+or via anaconda
+```bash
+ conda create -n Stock_market_analysis python=3.8.6
+```
+and activate environment.
+```bash
+ activate Stock_market_analysis 
+```
+Install the Local requirements
 ```bash
  pip install -r requirements.txt
 ```
-
 ## Deployment
-
-To deploy this project 
-open command prompt in the same directory then type and run the 
-below command
+Build and run the Application Locally
 ```bash
   streamlit run app.py
 ```
-Note: Please make sure that you gernarate the API token keys from twitter, as it is required to perform sentiment analysis.
+Note: Above commands are for Windows only and  Please make sure that you gernarate the API token keys from twitter, as it is required to perform sentiment analysis.
 
 ## About Me
 
