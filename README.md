@@ -14,6 +14,10 @@ What you can do using this app :
 
 4 . Get the results for different company stocks.
 
+## Home page 
+![Stock_market_analysis_screenshot](https://github.com/Manjunathpshet/Stock_market_analysis/blob/master/assets/screen_shots/home.PNG?raw=true)
+
+
 ## Installation
 Clone the repo
 ```bash
