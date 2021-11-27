@@ -51,17 +51,17 @@ def get_data(name, start_date= date(2015,1,1) , end_date= date(2022,12,25)):
         data = yf.Ticker(name).history(start = start_date ,end= end_date)
         return data 
 
-st.write('Choose dates for getting the stock data : ')
-START = st.date_input("Starting Date" , date(2015,1,1) ) 
-TODAY = st.date_input("End Date" , date.today() )
+# st.write('Choose dates for getting the stock data : ')
+START = date(2015,1,1)
+TODAY = date.today() 
 
 data_load_state = st.text('Loading data...')
 data1 = get_data(selected_stock+ '.NS',START ,TODAY )
 data_load_state.text('Loading data... done !')
 
+data = data1.copy()
 for i in (stocks[stocks['Symbol'] == selected_stock].loc[:,'Company Name']).index:
     company_name = stocks[stocks['Symbol'] == selected_stock]['Company Name'][i]
-
 
 try:
     new = np.round((data1.tail(1)['Close'][0]),2)
@@ -80,41 +80,22 @@ try:
     st.write('52 Weeks Range : ')
     st.write(range_52) ## 52 weeks range vlaues 
     st.text('')
-    st.write('👈 Check the sidebar for stock Analysis and Prediction ! ')
+    
     st.text('')
 except IndexError:
     st.write('No data found , Please check the stock name entered :')
 
-else : 
-     
-    data = data1.copy() ## Taking copy of data
-
-    st.text('')
-    st.subheader('Historical data')
-    st.write('These are the latest 5 days data')
-    st.write(data.tail())
-
-    ## Download data as CSV
-    @st.cache
-    def convert_df(df):
-    # IMPORTANT: Cache the conversion to prevent computation on every rerun
-        return df.to_csv().encode('utf-8')
-
-    csv = convert_df(data1)
-    st.download_button(label="Download data as CSV", data = csv ,file_name='Stock_data.csv', mime='text/csv',)
-
-    st.subheader('Area chart for stock Closing price')
-    st.area_chart(data.Close, width=8, height= 500 ) # area chart
+else :
 
     st.sidebar.header('What do you want to do with stock')
-    user = st.sidebar.selectbox('SELECT FROM BELOW',('', 'ANALYSE', 'FORECAST' , 'SENTIMENT_ANALYSIS'))
+    user = st.sidebar.selectbox('SELECT FROM BELOW',('HOME', 'ANALYSE', 'FORECAST' , 'SENTIMENT_ANALYSIS'))
     st.sidebar.text('')
 
     my_bar = st.sidebar.progress(0)  # Progress bar 
     for percent_complete in range(100):
         time.sleep(0.1)
         my_bar.progress(percent_complete + 1)
-    
+        
     st.sidebar.text('')
     st.sidebar.text('')
     st.sidebar.text('')
@@ -124,8 +105,33 @@ else :
     st.sidebar.write('3.  Perform sentiment analysis on different company. ')
     st.sidebar.write('4.  Get the results for different company stocks. ')
 
-    if user == 'ANALYSE':
 
+    if user == 'HOME': 
+        st.write('👈 Check the sidebar for stock Analysis and Prediction ! ')
+        st.text('')
+        data = data1.copy() ## Taking copy of data
+        st.write('Choose dates for getting the stock data : ')
+        START = st.date_input("Starting Date" , date(2015,1,1) ) 
+        TODAY = st.date_input("End Date" , date.today() )
+        st.text('')
+        st.subheader('Historical data')
+        st.write('These are the latest 5 days data')
+        st.write(data.tail())
+
+        ## Download data as CSV
+        @st.cache
+        def convert_df(df):
+        # IMPORTANT: Cache the conversion to prevent computation on every rerun
+            return df.to_csv().encode('utf-8')
+
+        csv = convert_df(data1)
+        st.download_button(label="Download data as CSV", data = csv ,file_name='Stock_data.csv', mime='text/csv',)
+
+        st.subheader('Area chart for stock Closing price')
+        st.area_chart(data.Close, width=8, height= 500 ) # area chart
+
+    elif user == 'ANALYSE':
+        # st.subheader(company_name)
         new_data = data.drop(columns = {'Dividends', 'Stock Splits'})
         st.subheader('Let\'s Analyse Stock')
         st.write(new_data.describe())
@@ -163,8 +169,23 @@ else :
 
 
     elif user == 'FORECAST':
+        # st.subheader(company_name)
         # Dropping the columns which are not relevent 
         data =data.drop(columns = {'Open', 'High', 'Low', 'Volume', 'Dividends', 'Stock Splits'})
+
+        def date_fun(df):
+            # create a date range from to today to 2021
+            a=pd.date_range(start=date.today().isoformat(), end='2023-12-31' ,freq='D')
+            # remove the weekends 
+            b=pd.bdate_range(start=a[0],end=a[-1])
+            # additional holiday dates apart from weekends for 2021
+            none_trading_dates= ['2021-11-05', '2021-11-19']
+            #removing the additional holidays from the non weekend dates
+            b = b[~(b.strftime('%Y-%m-%d').isin(none_trading_dates))]
+            # add the new dates without weedends to index of data frame strftime is isued to convert the format to Y-M-D
+            df.index=b[:len(df)].strftime('%Y-%m-%d')
+        
+            return df
 
         # Applyig box cox transformation
         close_box, lambda_ = stats.boxcox(data['Close'])
@@ -174,7 +195,7 @@ else :
         scaler = MinMaxScaler(feature_range=(0, 1))   # values will be scaled between 0 and 1
         data = scaler.fit_transform(data)
 
-        #Splitting dataset into train and test split
+            #Splitting dataset into train and test split
 
         training_size=int(len(data)*0.80)
         test_size=len(data)-training_size
@@ -240,7 +261,6 @@ else :
 
         st.text('')
         st.text('')
-        st.text('')
 
         n_days = st.number_input('Insert Day\'s of prediction' , min_value = 7 , max_value = 30)
 
@@ -249,7 +269,7 @@ else :
         n_steps=100
         i=0
         while(i<n_days):
-        
+            
             if(len(temp_input)>100):
                 x_input=np.array(temp_input[1:])
                 x_input=x_input.reshape(1,-1)
@@ -270,7 +290,7 @@ else :
         day_new= data1.index[len(data1)-100:]
         day_pred= pd.date_range(date.today(), periods= n_days , freq='D')
 
-        
+            
         st.subheader(f"Predicting for next {n_days} days")  
         fig = plt.figure(figsize=(11,6))
         plt.plot(day_new,inv_boxcox(scaler.inverse_transform(data[len(data)-100 :]), lambda_ ), label = ' actual Closing price')
@@ -281,10 +301,16 @@ else :
         st.text('')
         st.write('These are the Forecasted values : ')
         df = pd.DataFrame(inv_boxcox(scaler.inverse_transform((lst_output)), lambda_ ), columns= ['Predicted Price'])
+        df= date_fun(df)
         st.write(df)
         st.text('')
         ## Download forecasted data as CSV
         st.text('')
+        ## Download data as CSV
+        @st.cache
+        def convert_df(df):
+        # IMPORTANT: Cache the conversion to prevent computation on every rerun
+            return df.to_csv().encode('utf-8')
         csv1 = convert_df(df)
         st.download_button(label="Download data as CSV", data = csv1 ,file_name='Forcasted_data.csv', mime='text/csv',)
 
@@ -295,13 +321,13 @@ else :
         low , high = conf_interval
         # st.write( 'Closing price at 95% confidence interval is:' , np.round(conf_interval, 2))
         st.write('Closing price at 95% confidence interval is:' ,low , high )
-        
+            
 
     elif user == 'SENTIMENT_ANALYSIS' :
         ## authenticating 
         st.text('')
-        st.subheader('SENTIMENT ANALYSIS FOR :')
-        st.subheader(company_name)
+        st.subheader('SENTIMENT ANALYSIS  :')
+        # st.subheader(company_name)
         try:
             import token_keys as tk
             access_token =  tk.access_token                  
@@ -348,23 +374,23 @@ else :
             tweet_data['Tweets'] = tweet_data.Tweets.apply(clean)
 
             TAG_CLEANING_RE = "@\S+"
-            # Remove @ tags
+                # Remove @ tags
             tweet_data['Tweets'] = tweet_data['Tweets'].map(lambda x: re.sub(TAG_CLEANING_RE, ' ', x))
 
-            # Remove numbers
+                # Remove numbers
             tweet_data['Tweets'] = tweet_data['Tweets'].map(lambda x: re.sub(r'\d+', ' ', x))
 
-            # Remove links
+                # Remove links
             TEXT_CLEANING_RE = "https?:\S+|http?:\S|[^A-Za-z0-9]+"
             tweet_data['Tweets'] = tweet_data['Tweets'].map(lambda x: re.sub(TEXT_CLEANING_RE, ' ', x))
 
-            # Sentiment analysis
+                # Sentiment analysis
 
             afinn = pd.read_csv('Afinn.csv', sep=',', encoding='latin-1')
             affinity_scores = afinn.set_index('word')['value'].to_dict()
             nlp = spacy.load('en_core_web_sm') 
 
-            # Custom function :score each word in a sentence in lemmatised form, but calculate the score for the whole original sentence.
+                # Custom function :score each word in a sentence in lemmatised form, but calculate the score for the whole original sentence.
             sentiment_lexicon = affinity_scores
 
             def calculate_sentiment(text: str = None):
@@ -374,7 +400,7 @@ else :
                     for word in sentence:
                         sent_score += sentiment_lexicon.get(word.lemma_, 0)
                 return sent_score
-            
+                
             # Applying sentiment calculation to the data set and creating column of same
 
             tweet_data['sentiment_value'] = tweet_data['Tweets'].apply(calculate_sentiment)
@@ -401,13 +427,13 @@ else :
                     positive.append(item)
                 else:
                     negative.append(item)
-            
+                
             # st.write('Tweet\s found : ' , len(tweets))
             # st.write (len(tweets))
 
-    
-            st.text('')
         
+            st.text('')
+            
             if np.abs(len(positive) - len(negative)) > 100 and len(positive) > len(negative) :
                 st.write('Sentiment Is Positive!! We can plan to buy some shares :heart_eyes: ')
                 st.text('')
@@ -423,9 +449,6 @@ else :
             else:
                 st.write('Market Sentiment is Neutral !! :confused: ')       
 
-    else  :
-        pass
-        
 
 
 
